@@ -1,12 +1,26 @@
 using DevGamesAPI.Context;
+using DevGamesAPI.Context.Repositories;
 using DevGamesAPI.Mappers;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddSingleton<DevGamesContext>();
+var connectionString = builder.Configuration.GetConnectionString("DevGamesCs");
+
+/* builder.Services
+    .AddSingleton<DevGamesContext>(); */
+
+builder.Services
+    .AddDbContext<DevGamesContext>(o =>
+        o.UseSqlServer(connectionString));
+
+builder.Services.AddScoped<IBoardRepository, BoardRepository>();
+builder.Services.AddScoped<IPostRepository, PostRepository>();
+
 builder.Services.AddAutoMapper(typeof(BoardMapper));
+
 builder.Services.AddControllers();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

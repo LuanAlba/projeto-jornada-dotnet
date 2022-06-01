@@ -9,10 +9,9 @@ namespace DevGamesAPI.Entities
         public DateTime Criacao { get; private set; }
         public List<Post> Posts { get; private set; }
 
-        public Board(int id, string titulo, string descricao, string regras)
+        public Board(string tituloJogo, string descricao, string regras)
         {
-            Id = id;
-            TituloJogo = titulo;
+            TituloJogo = tituloJogo;
             Descricao = descricao;
             Regras = regras;
 

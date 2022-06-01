@@ -1,7 +1,10 @@
+using AutoMapper;
 using DevGamesAPI.Context;
+using DevGamesAPI.Context.Repositories;
 using DevGamesAPI.Entities;
 using DevGamesAPI.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace DevGamesAPI.Controllers
 {
@@ -9,37 +12,29 @@ namespace DevGamesAPI.Controllers
     [ApiController]
     public class PostsController : ControllerBase
     {
-        // private readonly IMapper mapper;
-        private readonly DevGamesContext context;
-        public PostsController(DevGamesContext context)
+        private readonly IMapper mapper;
+        private readonly IPostRepository repository;
+        public PostsController(IMapper mapper, IPostRepository repository)
         {
-            // this.mapper = mapper;
-            this.context = context;
+            this.mapper = mapper;
+            this.repository = repository;
         }
 
         [HttpGet]
         public IActionResult ObterTodos(int id)
         {
-            //obter todos os POSTS de TAL BOARD
-            var boards = context.Boards.SingleOrDefault(o => o.Id == id);
+            var posts = repository.ObterTodosPorBoard(id);
 
-            if(boards == null)
-                return NotFound();
-
-            // retornar todos os POSTS de BOARD
-            return Ok(boards.Posts);
+            return Ok(posts);
         }
 
         //GET api/boards/1/posts
         [HttpGet("{postId}")]
         public IActionResult ObterPorId(int id, int postId)
         {
-            var board = context.Boards.SingleOrDefault(o => o.Id == id);
-            if(board == null)
-                return NotFound();
+            var post = repository.ObterPorId(postId);
 
-            var post = board.Posts.SingleOrDefault(i => i.Id == postId);
-            if(post == null)
+            if (post == null)
                 return NotFound();
 
             return Ok(post);
@@ -49,32 +44,27 @@ namespace DevGamesAPI.Controllers
         [HttpPost]
         public IActionResult Adicionar(int id, AddPostsInputModel model)
         {
-            var board = context.Boards.SingleOrDefault(o => o.Id == id);
-            if(board == null)
-                return NotFound();
+            var post = new Post(model.Titulo, model.Descricao, id);
 
-            var post = new Post(model.Id, model.Titulo, model.Descricao);
-            board.AddPost(post);
+            repository.Adicionar(post);
 
-             return CreatedAtAction(nameof(ObterPorId), new { id = id, postId = post.Id }, post);
+            return CreatedAtAction(nameof(ObterPorId), new { id = post.Id, postId = post.Id }, model);
         }
 
         //POST api/boards/1/posts/1/comments
         [HttpPost("{postId}/comments")]
         public IActionResult PostarComentario(int id, int postId, AddCommentInputModel model)
         {
-            var board = context.Boards.SingleOrDefault(o => o.Id == id);
-            if(board == null)
-                return NotFound();
+            var postExiste = repository.PostExiste(postId);
 
-            var post = board.Posts.SingleOrDefault(i => i.Id == postId);
-            if(post == null)
-                return NotFound();
+            if (!postExiste) return NotFound();
 
-            var comentario = new Comentario(model.Id, model.Titulo, model.Descricao, model.Usuario);
-            post.AddComentario(comentario);
-            
+            var comentario = new Comentario(model.Titulo, model.Descricao, model.Usuario, postId);
+
+            repository.PostarComentario(comentario);
+
             return NoContent();
+            
         }
     }
 }
